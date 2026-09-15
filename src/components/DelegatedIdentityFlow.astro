@@ -1,0 +1,124 @@
+<figure class="delegated-flow" aria-labelledby="delegated-request">
+  <figcaption>Illustrative workflow · Not a live transaction</figcaption>
+  <div class="request-example">
+    <span class="flow-label">A project manager asks</span>
+    <blockquote id="delegated-request">“Add Tilya to Project Atlas through November 15.”</blockquote>
+  </div>
+
+  <section class="business-workflow" aria-labelledby="business-workflow-heading">
+    <h3 id="business-workflow-heading">Business process workflow</h3>
+    <ol class="business-steps" role="list">
+      <li>
+        <span class="step-index">01</span>
+        <h4>Interpret</h4>
+        <p>Identify the person, project and access duration.</p>
+      </li>
+      <li>
+        <span class="step-index">02</span>
+        <h4>Authorize</h4>
+        <p>Check delegated authority and resource policy. Obtain approval where required.</p>
+      </li>
+      <li class="execution-step">
+        <span class="step-index">03</span>
+        <h4>Grant access</h4>
+        <p>Assign the Project Atlas role and provision access in the target application.</p>
+      </li>
+      <li>
+        <span class="step-index">04</span>
+        <h4>Record</h4>
+        <p>Log the approval and action, with requester and agent attribution.</p>
+      </li>
+      <li>
+        <span class="step-index">05</span>
+        <h4>Review &amp; expire</h4>
+        <p>Expire access on November 15. Keep access and connections reviewable and revocable.</p>
+      </li>
+    </ol>
+    <p class="business-outcome"><strong>Business outcome</strong> Tilya has time-bound access to Project Atlas.</p>
+  </section>
+
+  <section class="under-the-hood" aria-labelledby="agent-execution-heading">
+    <div class="execution-heading">
+      <span class="flow-label">Under the hood · Step 03</span>
+      <h3 id="agent-execution-heading">Agent execution path</h3>
+      <p>How the approved change reaches the application.</p>
+    </div>
+    <div class="execution-explanation">
+      <ol class="authority-steps" role="list" aria-label="Agent execution sequence">
+        <li><strong>Requester + agent</strong><span>Carry identity context</span></li>
+        <li><strong>Policy decision</strong><span>Check the permitted action</span></li>
+        <li><strong>Scoped authority</strong><span>Limit access to the task</span></li>
+        <li><strong>Governed connection</strong><span>Execute via API, MCP or workflow</span></li>
+      </ol>
+      <p class="authority-note">The agent’s authority to make the change is separate from Tilya’s access. Policy and resource controls enforce that boundary, not the AI model.</p>
+    </div>
+  </section>
+</figure>
+
+<details class="enterprise-patterns">
+  <summary>Enterprise patterns behind this solution</summary>
+  <p>An agentic interface extends delegated administration; identity and integration controls still govern execution. These are example patterns, not public client case studies.</p>
+  <dl>
+    <div><dt>Healthcare</dt><dd>Provider administrators manage external provider users.</dd></div>
+    <div><dt>Media &amp; production</dt><dd>Production coordinators manage temporary project teams.</dd></div>
+    <div><dt>Enterprise</dt><dd>Managers and application owners manage employee or contractor access.</dd></div>
+  </dl>
+</details>
+
+<style>
+  .delegated-flow { margin: 0; padding: 32px; border-radius: var(--radius); background: var(--surface-light); color: var(--bg); }
+  figcaption { font-size: 12px; color: rgba(0,38,45,.7); }
+  .request-example { padding: 26px 0 32px; }
+  .flow-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  blockquote { margin: 12px 0 0; max-width: 860px; font-family: "Manrope", "Inter", sans-serif; font-size: clamp(25px, 3vw, 36px); font-weight: 600; line-height: 1.25; letter-spacing: -.015em; }
+  h3 { font-size: 17px; font-weight: 700; margin: 0 0 24px; }
+  h4 { font-size: 17px; font-weight: 600; line-height: 1.3; margin: 16px 0 10px; }
+  .business-steps { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 0; padding: 0; margin: 0; list-style: none; }
+  .business-steps li { position: relative; min-width: 0; padding-right: 24px; }
+  .business-steps li:last-child { padding-right: 0; }
+  .business-steps li::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; border-top: 1px solid rgba(0,38,45,.24); }
+  .business-steps li:last-child::before { display: none; }
+  .step-index { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 31px; height: 31px; border: 1px solid rgba(0,38,45,.3); border-radius: 50%; background: var(--surface-light); font-size: 11px; font-weight: 700; }
+  .execution-step .step-index { background: var(--bg); color: var(--lime); border-color: var(--bg); }
+  .business-steps p { margin: 0; font-size: 13px; line-height: 1.6; color: rgba(0,38,45,.76); }
+  .business-outcome { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 26px 0 0; font-size: 14px; }
+  .business-outcome strong { font-weight: 700; }
+  .under-the-hood { display: grid; grid-template-columns: .75fr 2.25fr; gap: 32px; margin-top: 30px; padding-top: 30px; border-top: 1px solid var(--surface-light-line); }
+  .execution-heading h3 { margin: 10px 0; }
+  .execution-heading p { font-size: 13px; color: rgba(0,38,45,.7); margin: 0; max-width: 230px; }
+  .authority-steps { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; padding: 0; margin: 0; list-style: none; counter-reset: authority; }
+  .authority-steps li { counter-increment: authority; border-left: 2px solid rgba(0,38,45,.2); padding-left: 12px; }
+  .authority-steps li::before { content: counter(authority, decimal-leading-zero); display: block; margin-bottom: 10px; font-size: 11px; color: rgba(0,38,45,.65); }
+  .authority-steps strong { display: block; font-size: 13px; line-height: 1.4; font-weight: 700; }
+  .authority-steps span { display: block; margin-top: 6px; color: rgba(0,38,45,.72); font-size: 12px; line-height: 1.5; }
+  .authority-note { margin: 22px 0 0; max-width: 780px; font-size: 13px; line-height: 1.6; color: rgba(0,38,45,.76); }
+  .enterprise-patterns { margin-top: 24px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  summary { width: fit-content; cursor: pointer; font-size: 14px; font-weight: 600; }
+  summary::marker { color: var(--lime); }
+  summary:focus-visible { outline: 2px solid var(--lime); outline-offset: 6px; border-radius: 2px; }
+  .enterprise-patterns p, dd { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .enterprise-patterns p { max-width: 780px; margin: 20px 0; }
+  dl { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; margin-bottom: 0; }
+  dt { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  dd { margin: 0; }
+  @media (max-width: 980px) {
+    .under-the-hood { grid-template-columns: 1fr; gap: 24px; }
+    .execution-heading p { max-width: none; }
+    .business-steps li { padding-right: 16px; }
+    h4 { font-size: 15px; }
+  }
+  @media (max-width: 700px) {
+    .delegated-flow { padding: 24px 20px; }
+    .business-steps { grid-template-columns: 1fr; }
+    .business-steps li, .business-steps li:last-child { padding: 0 0 24px 48px; }
+    .business-steps li:last-child { padding-bottom: 0; }
+    .business-steps li::before { top: 16px; bottom: 0; left: 15px; right: auto; border-top: 0; border-left: 1px solid rgba(0,38,45,.24); }
+    .step-index { position: absolute; left: 0; top: 0; }
+    h4 { font-size: 17px; margin: 0 0 6px; padding-top: 4px; }
+    .authority-steps { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px 16px; }
+    dl { grid-template-columns: 1fr; gap: 18px; }
+  }
+  @media (max-width: 360px) {
+    .authority-steps { grid-template-columns: 1fr; }
+  }
+</style>

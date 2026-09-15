@@ -1,0 +1,13 @@
+---
+import { services } from '../data/services';
+---
+<div class="service-grid">
+  {services.map((service) => (
+    <article class="service" data-reveal>
+      <span class="index">{service.index}</span>
+      <h3>{service.title}</h3>
+      <p>{service.short}</p>
+      <a href={`/services/${service.slug}`}>Explore service →</a>
+    </article>
+  ))}
+</div>

@@ -1,0 +1,48 @@
+<section class="agent-control-model" aria-labelledby="agent-control-heading">
+  <div class="model-heading" data-reveal>
+    <div class="eyebrow">Visibility → Understanding → Control</div>
+    <h3 id="agent-control-heading">Discovery is evidence, not authorization.</h3>
+    <p>Seeing an agent connected to a system does not prove what it can do. Move from inventory to effective access, then enforce the boundaries.</p>
+  </div>
+  <ol class="model-stages" role="list">
+    <li class="control-stage" data-reveal>
+      <span class="stage-label">01 / Find</span>
+      <h4>Visibility</h4>
+      <p>Find agents, endpoints, OAuth grants and MCP connections. Record the relationships your discovery sources can actually show.</p>
+      <strong>What is operating here?</strong>
+    </li>
+    <li class="control-stage" data-reveal>
+      <span class="stage-label">02 / Interpret</span>
+      <h4>Understanding</h4>
+      <p>Establish business purpose, accountable ownership and human context. Trace credentials, reachable resources and effective permissions.</p>
+      <strong>What can it do, and for whom?</strong>
+    </li>
+    <li class="control-stage featured" data-reveal>
+      <span class="stage-label">03 / Govern</span>
+      <h4>Control</h4>
+      <p>Manage agent identity and least privilege. Enforce policy, approvals and runtime authorization, with monitoring, review and revocation.</p>
+      <strong>What should it be allowed to do?</strong>
+    </li>
+  </ol>
+  <p class="model-principle" data-reveal>Keep predictable operations deterministic. Use agentic reasoning where it adds value, with human approval where risk demands it.</p>
+</section>
+
+<style>
+  .agent-control-model { margin-top: 56px; padding-top: 40px; border-top: 1px solid var(--line); }
+  .model-heading { max-width: 740px; margin-bottom: 28px; }
+  .model-heading h3 { margin: 14px 0; font-size: clamp(26px, 3vw, 36px); line-height: 1.2; font-weight: 600; letter-spacing: -.015em; }
+  .model-heading p, .model-principle { color: var(--muted); font-size: 16px; line-height: 1.6; }
+  .model-stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; list-style: none; padding: 0; margin: 0; }
+  .model-stages li { display: flex; flex-direction: column; min-width: 0; }
+  .model-stages h4 { margin: 0 0 14px; font-size: 23px; font-weight: 600; letter-spacing: -.01em; }
+  .model-stages p { margin: 0 0 24px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+  .model-stages strong { margin-top: auto; font-size: 13px; font-weight: 600; color: var(--mint); }
+  .model-principle { max-width: 780px; margin: 24px 0 0; }
+  @media (max-width: 980px) {
+    .model-stages { grid-template-columns: 1fr; }
+    .model-stages p { margin-bottom: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] { opacity: 1; transform: none; transition: none; }
+  }
+</style>

@@ -1,0 +1,549 @@
+<section class="assessment-experience" data-assessment-root aria-labelledby="assessment-title">
+  <div class="wrap assessment-wrap">
+    <header class="assessment-intro-copy">
+      <div class="eyebrow">Identity Environment Assessment</div>
+      <h1 id="assessment-title">Assess Your Identity Environment</h1>
+      <p>See where your identity foundation is strong, where operational friction remains, and what to prioritize next.</p>
+    </header>
+
+    <div class="assessment-trust" aria-label="Assessment details">
+      <span><strong>~4 minutes</strong> to complete</span>
+      <span><strong>No credentials</strong> or configuration exports</span>
+      <span><strong>Results first</strong> — contact details are optional</span>
+    </div>
+
+    <div class="assessment-welcome" data-assessment-intro>
+      <div>
+        <span class="assessment-kicker">A practical baseline</span>
+        <h2>Answer at the level your team can confidently describe today.</h2>
+        <p>This assessment looks at architecture, lifecycle, automation, governance, security, and emerging non-human identity controls. It never requests production access or sensitive customer data.</p>
+      </div>
+      <button class="button primary assessment-start" type="button" data-assessment-start>Begin assessment <span aria-hidden="true">→</span></button>
+    </div>
+
+    <div class="assessment-stage" data-assessment-stage hidden>
+      <aside class="assessment-progress" aria-label="Assessment progress">
+        <div class="progress-label" data-progress-label>Step 1 of 7</div>
+        <div class="progress-track" role="progressbar" aria-label="Assessment completion" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" data-progress-bar>
+          <span data-progress-fill></span>
+        </div>
+        <ol data-progress-steps></ol>
+      </aside>
+
+      <div class="assessment-panel" data-question-panel>
+        <div class="assessment-section-heading">
+          <div class="assessment-kicker" data-section-eyebrow></div>
+          <h2 tabindex="-1" data-section-title></h2>
+          <p data-section-description></p>
+        </div>
+        <form data-question-form novalidate>
+          <div data-question-list></div>
+          <div class="assessment-error" role="alert" aria-live="polite" data-assessment-error></div>
+          <div class="assessment-controls">
+            <button class="button ghost" type="button" data-previous>← Previous</button>
+            <button class="button primary" type="submit" data-continue>Continue →</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="assessment-results" data-assessment-results hidden aria-live="polite"></div>
+  </div>
+</section>
+
+<script>
+  import {
+    assessmentSections,
+    conditionMatches,
+    getVisibleQuestions,
+    getVisibleSections,
+    type AnswerValue,
+    type AssessmentQuestion,
+    type AssessmentResponses
+  } from '../../data/assessment';
+  import { scoreAssessment, type AssessmentScores } from '../../lib/assessment/scoring';
+  import { interpretAssessment, type Recommendation } from '../../lib/assessment/recommendations';
+  import {
+    isSubmissionConfigured,
+    submitAssessment,
+    type AssessmentContact,
+    type AssessmentSubmission
+  } from '../../lib/assessment/submission';
+
+  const root = document.querySelector<HTMLElement>('[data-assessment-root]');
+
+  if (root) {
+    const storageKey = 'fiero-identity-assessment-v1';
+    const intro = root.querySelector<HTMLElement>('[data-assessment-intro]')!;
+    const startButton = root.querySelector<HTMLButtonElement>('[data-assessment-start]')!;
+    const stage = root.querySelector<HTMLElement>('[data-assessment-stage]')!;
+    const resultsPanel = root.querySelector<HTMLElement>('[data-assessment-results]')!;
+    const questionForm = root.querySelector<HTMLFormElement>('[data-question-form]')!;
+    const questionList = root.querySelector<HTMLElement>('[data-question-list]')!;
+    const sectionEyebrow = root.querySelector<HTMLElement>('[data-section-eyebrow]')!;
+    const sectionTitle = root.querySelector<HTMLElement>('[data-section-title]')!;
+    const sectionDescription = root.querySelector<HTMLElement>('[data-section-description]')!;
+    const progressLabel = root.querySelector<HTMLElement>('[data-progress-label]')!;
+    const progressBar = root.querySelector<HTMLElement>('[data-progress-bar]')!;
+    const progressFill = root.querySelector<HTMLElement>('[data-progress-fill]')!;
+    const progressSteps = root.querySelector<HTMLOListElement>('[data-progress-steps]')!;
+    const previousButton = root.querySelector<HTMLButtonElement>('[data-previous]')!;
+    const errorMessage = root.querySelector<HTMLElement>('[data-assessment-error]')!;
+
+    let responses: AssessmentResponses = {};
+    let currentSectionId = assessmentSections[0].id;
+    let showingResults = false;
+
+    const escapeHtml = (value: string): string => value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+
+    const hasAnswer = (value: AnswerValue | undefined): boolean => Array.isArray(value) ? value.length > 0 : Boolean(value);
+
+    const restoreProgress = () => {
+      try {
+        const stored = sessionStorage.getItem(storageKey);
+        if (!stored) return;
+        const parsed = JSON.parse(stored) as {
+          responses?: AssessmentResponses;
+          currentSectionId?: string;
+          showingResults?: boolean;
+        };
+        responses = parsed.responses ?? {};
+        currentSectionId = parsed.currentSectionId ?? assessmentSections[0].id;
+        showingResults = Boolean(parsed.showingResults);
+      } catch {
+        sessionStorage.removeItem(storageKey);
+      }
+    };
+
+    const saveProgress = () => {
+      sessionStorage.setItem(storageKey, JSON.stringify({ responses, currentSectionId, showingResults }));
+    };
+
+    const removeHiddenAnswers = () => {
+      for (const section of assessmentSections) {
+        if (!conditionMatches(section.when, responses)) {
+          section.questions.forEach((question) => delete responses[question.id]);
+          continue;
+        }
+        section.questions.forEach((question) => {
+          if (!conditionMatches(question.when, responses)) delete responses[question.id];
+        });
+      }
+    };
+
+    const renderProgress = () => {
+      const sections = getVisibleSections(responses);
+      let index = sections.findIndex((section) => section.id === currentSectionId);
+      if (index < 0) {
+        index = 0;
+        currentSectionId = sections[0].id;
+      }
+      const step = index + 1;
+      const percent = Math.round((step / sections.length) * 100);
+
+      progressLabel.textContent = `Step ${step} of ${sections.length}`;
+      progressBar.setAttribute('aria-valuemax', String(sections.length));
+      progressBar.setAttribute('aria-valuenow', String(step));
+      progressFill.style.width = `${percent}%`;
+      progressSteps.innerHTML = sections.map((section, sectionIndex) => `
+        <li class="${sectionIndex === index ? 'current' : ''} ${sectionIndex < index ? 'complete' : ''}">
+          <span>${sectionIndex < index ? '✓' : String(sectionIndex + 1).padStart(2, '0')}</span>
+          ${escapeHtml(section.eyebrow)}
+        </li>
+      `).join('');
+      previousButton.disabled = index === 0;
+    };
+
+    const answerMarkup = (question: AssessmentQuestion): string => {
+      const answer = responses[question.id];
+      const inputType = question.type === 'multi' ? 'checkbox' : 'radio';
+      const optional = question.required === false ? '<span class="optional-label">Optional</span>' : '';
+
+      return `
+        <fieldset class="assessment-question" data-question-id="${escapeHtml(question.id)}">
+          <legend>${escapeHtml(question.prompt)} ${optional}</legend>
+          <div class="answer-grid">
+            ${question.options.map((item) => {
+              const checked = Array.isArray(answer) ? answer.includes(item.value) : answer === item.value;
+              return `
+                <label class="answer-option">
+                  <input type="${inputType}" name="${escapeHtml(question.id)}" value="${escapeHtml(item.value)}" ${checked ? 'checked' : ''} />
+                  <span class="answer-control" aria-hidden="true"></span>
+                  <span>${escapeHtml(item.label)}</span>
+                </label>
+              `;
+            }).join('')}
+          </div>
+        </fieldset>
+      `;
+    };
+
+    const readQuestionAnswer = (question: AssessmentQuestion): AnswerValue => {
+      const inputs = [...questionList.querySelectorAll<HTMLInputElement>(`input[name="${question.id}"]`)];
+      if (question.type === 'multi') return inputs.filter((input) => input.checked).map((input) => input.value);
+      return inputs.find((input) => input.checked)?.value ?? '';
+    };
+
+    const applyExclusiveOption = (question: AssessmentQuestion, changedInput: HTMLInputElement) => {
+      const exclusiveByQuestion: Record<string, string> = {
+        priorities: 'assess-current',
+        platforms: 'not-sure',
+        automationTools: 'manual'
+      };
+      const exclusiveValue = exclusiveByQuestion[question.id];
+      if (!exclusiveValue || !changedInput.checked) return;
+      const inputs = [...questionList.querySelectorAll<HTMLInputElement>(`input[name="${question.id}"]`)];
+      if (changedInput.value === exclusiveValue) {
+        inputs.forEach((input) => { if (input !== changedInput) input.checked = false; });
+      } else {
+        const exclusive = inputs.find((input) => input.value === exclusiveValue);
+        if (exclusive) exclusive.checked = false;
+      }
+    };
+
+    const renderSection = (focusHeading = false) => {
+      intro.hidden = true;
+      resultsPanel.hidden = true;
+      stage.hidden = false;
+
+      const sections = getVisibleSections(responses);
+      const section = sections.find((item) => item.id === currentSectionId) ?? sections[0];
+      currentSectionId = section.id;
+      const questions = getVisibleQuestions(section, responses);
+
+      sectionEyebrow.textContent = section.eyebrow;
+      sectionTitle.textContent = section.title;
+      sectionDescription.textContent = section.description;
+      questionList.innerHTML = questions.map(answerMarkup).join('');
+      errorMessage.textContent = '';
+      renderProgress();
+
+      questionList.querySelectorAll<HTMLInputElement>('input').forEach((input) => {
+        input.addEventListener('change', () => {
+          const question = questions.find((item) => item.id === input.name);
+          if (!question) return;
+          applyExclusiveOption(question, input);
+          responses[question.id] = readQuestionAnswer(question);
+          removeHiddenAnswers();
+          saveProgress();
+
+          const changesCurrentQuestions = section.questions.some((item) => item.when?.questionId === question.id);
+          if (changesCurrentQuestions) renderSection();
+          else renderProgress();
+        });
+      });
+
+      if (focusHeading) sectionTitle.focus();
+    };
+
+    const validateCurrentSection = (): boolean => {
+      const section = getVisibleSections(responses).find((item) => item.id === currentSectionId);
+      if (!section) return false;
+      const missing = getVisibleQuestions(section, responses).find((question) => question.required !== false && !hasAnswer(responses[question.id]));
+      questionList.querySelectorAll('.assessment-question.invalid').forEach((item) => item.classList.remove('invalid'));
+
+      if (!missing) {
+        errorMessage.textContent = '';
+        return true;
+      }
+
+      errorMessage.textContent = 'Please answer each required question before continuing.';
+      const fieldset = questionList.querySelector<HTMLElement>(`[data-question-id="${missing.id}"]`);
+      fieldset?.classList.add('invalid');
+      fieldset?.querySelector<HTMLInputElement>('input')?.focus();
+      return false;
+    };
+
+    const scoreMarkup = (scores: AssessmentScores): string => Object.values(scores).map((result) => {
+      const applicable = result.score !== null;
+      return `
+        <article class="dimension-card ${applicable ? '' : 'not-applicable'}">
+          <div class="dimension-heading">
+            <h3>${escapeHtml(result.label)}</h3>
+            <strong>${applicable ? `${result.score}` : 'N/A'}</strong>
+          </div>
+          <div class="score-track" aria-hidden="true"><span style="width:${applicable ? result.score : 0}%"></span></div>
+          <div class="dimension-band">${escapeHtml(result.band)}</div>
+        </article>
+      `;
+    }).join('');
+
+    const listMarkup = (items: string[]): string => `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+
+    const recommendationMarkup = (recommendations: Recommendation[]): string => recommendations.map((recommendation, index) => `
+      <article class="recommendation-card">
+        <span>0${index + 1}</span>
+        <div><h3>${escapeHtml(recommendation.title)}</h3><p>${escapeHtml(recommendation.description)}</p></div>
+      </article>
+    `).join('');
+
+    const bindContactForm = (scores: AssessmentScores, recommendations: Recommendation[]) => {
+      const form = resultsPanel.querySelector<HTMLFormElement>('[data-contact-form]');
+      const status = resultsPanel.querySelector<HTMLElement>('[data-submission-status]');
+      const submitButton = resultsPanel.querySelector<HTMLButtonElement>('[data-submit-profile]');
+      if (!form || !status || !submitButton) return;
+
+      if (!isSubmissionConfigured()) {
+        status.textContent = 'Form delivery is not configured in this environment. Your assessment results remain available above.';
+        status.classList.add('neutral');
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+
+        const formData = new FormData(form);
+        const contact: AssessmentContact = {
+          name: String(formData.get('name') ?? ''),
+          email: String(formData.get('email') ?? ''),
+          company: String(formData.get('company') ?? ''),
+          role: String(formData.get('role') ?? ''),
+          context: String(formData.get('context') ?? ''),
+          reviewRequested: formData.get('reviewRequested') === 'yes'
+        };
+        const payload: AssessmentSubmission = {
+          contact,
+          responses,
+          scores,
+          recommendations,
+          timestamp: new Date().toISOString()
+        };
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Sending…';
+        status.textContent = '';
+        status.className = 'submission-status';
+
+        const result = await submitAssessment(payload);
+        status.textContent = result.message;
+        status.classList.add(result.ok ? 'success' : 'error');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Send my assessment profile';
+      });
+    };
+
+    const renderResults = (focusHeading = false) => {
+      showingResults = true;
+      saveProgress();
+      intro.hidden = true;
+      stage.hidden = true;
+      resultsPanel.hidden = false;
+
+      const scores = scoreAssessment(responses);
+      const interpretation = interpretAssessment(responses, scores);
+
+      resultsPanel.innerHTML = `
+        <header class="results-heading">
+          <div class="assessment-kicker">Your assessment profile</div>
+          <h2 tabindex="-1" data-results-title>A dimension-by-dimension view of your identity environment.</h2>
+          <p>These results are directional, deterministic, and based only on the answers you provided. They are not a security certification or technical audit.</p>
+        </header>
+
+        <div class="dimension-grid">${scoreMarkup(scores)}</div>
+
+        <div class="interpretation-grid">
+          <section><div class="assessment-kicker">What looks strong</div>${listMarkup(interpretation.strengths)}</section>
+          <section><div class="assessment-kicker">Where we'd focus next</div>${listMarkup(interpretation.focusAreas)}</section>
+        </div>
+
+        <section class="recommendations">
+          <div class="assessment-kicker">Top 3 recommended priorities</div>
+          <h2>A focused sequence for what comes next.</h2>
+          <div class="recommendation-list">${recommendationMarkup(interpretation.recommendations)}</div>
+        </section>
+
+        <section class="contact-capture">
+          <div class="contact-intro">
+            <div class="assessment-kicker">Optional next step</div>
+            <h2>Want to keep this profile?</h2>
+            <p>Get a copy of your results, or have a Fiero identity specialist review the profile and suggest next steps.</p>
+          </div>
+          <form data-contact-form>
+            <div class="contact-fields">
+              <label><span>Name</span><input name="name" autocomplete="name" required /></label>
+              <label><span>Work email</span><input type="email" name="email" autocomplete="email" required /></label>
+              <label><span>Company</span><input name="company" autocomplete="organization" required /></label>
+              <label><span>Role</span><input name="role" autocomplete="organization-title" required /></label>
+              <label class="full-width"><span>Project / context <small>Optional</small></span><textarea name="context" rows="4"></textarea></label>
+              <label class="review-checkbox full-width">
+                <input type="checkbox" name="reviewRequested" value="yes" />
+                <span class="answer-control" aria-hidden="true"></span>
+                <span>I'd like Fiero to review my assessment and contact me.</span>
+              </label>
+            </div>
+            <p class="privacy-note">Your contact details and assessment profile are only sent when you submit this form.</p>
+            <button class="button primary" type="submit" data-submit-profile>Send my assessment profile</button>
+            <p class="submission-status" role="status" aria-live="polite" data-submission-status></p>
+          </form>
+        </section>
+
+        <div class="results-actions">
+          <button class="button ghost" type="button" data-back-to-assessment>← Review answers</button>
+          <button class="text-button" type="button" data-restart-assessment>Start over</button>
+        </div>
+      `;
+
+      bindContactForm(scores, interpretation.recommendations);
+      resultsPanel.querySelector<HTMLButtonElement>('[data-back-to-assessment]')?.addEventListener('click', () => {
+        const sections = getVisibleSections(responses);
+        currentSectionId = sections[sections.length - 1].id;
+        showingResults = false;
+        saveProgress();
+        renderSection(true);
+      });
+      resultsPanel.querySelector<HTMLButtonElement>('[data-restart-assessment]')?.addEventListener('click', () => {
+        responses = {};
+        currentSectionId = assessmentSections[0].id;
+        showingResults = false;
+        sessionStorage.removeItem(storageKey);
+        renderSection(true);
+      });
+
+      if (focusHeading) resultsPanel.querySelector<HTMLElement>('[data-results-title]')?.focus();
+    };
+
+    questionForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!validateCurrentSection()) return;
+
+      const sections = getVisibleSections(responses);
+      const index = sections.findIndex((section) => section.id === currentSectionId);
+      if (index < sections.length - 1) {
+        currentSectionId = sections[index + 1].id;
+        saveProgress();
+        renderSection(true);
+      } else {
+        renderResults(true);
+      }
+    });
+
+    previousButton.addEventListener('click', () => {
+      const sections = getVisibleSections(responses);
+      const index = sections.findIndex((section) => section.id === currentSectionId);
+      if (index <= 0) return;
+      currentSectionId = sections[index - 1].id;
+      saveProgress();
+      renderSection(true);
+    });
+
+    restoreProgress();
+    const hasSavedProgress = Object.keys(responses).length > 0 || showingResults;
+    if (hasSavedProgress) startButton.innerHTML = 'Resume assessment <span aria-hidden="true">→</span>';
+    startButton.addEventListener('click', () => {
+      if (showingResults) renderResults(true);
+      else renderSection(true);
+    });
+  }
+</script>
+
+<style is:global>
+  .assessment-experience{padding:88px 0 120px;min-height:calc(100vh - 76px)}
+  .assessment-wrap{max-width:1100px}
+  .assessment-intro-copy{max-width:880px}
+  .assessment-intro-copy h1{font-size:clamp(48px,7vw,88px);line-height:1.03;letter-spacing:-.026em;font-weight:600;margin:18px 0 24px}
+  .assessment-intro-copy>p{font-size:clamp(18px,2vw,22px);color:var(--muted);max-width:780px;margin:0}
+  .assessment-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:48px 0;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .assessment-trust span{padding:17px 20px;background:var(--bg-deep);font-size:13px;color:var(--muted)}
+  .assessment-trust strong{color:var(--mint)}
+  .assessment-welcome{display:grid;grid-template-columns:1fr auto;gap:42px;align-items:end;border:1px solid var(--line);border-radius:28px;padding:42px;background:linear-gradient(135deg,rgba(191,239,75,.045),rgba(255,255,255,.015))}
+  .assessment-welcome h2,.assessment-section-heading h2,.results-heading h2,.recommendations>h2,.contact-intro h2{font-size:clamp(30px,4vw,46px);line-height:1.12;letter-spacing:-.02em;font-weight:600;margin:10px 0 14px}
+  .assessment-welcome p,.assessment-section-heading p,.results-heading p,.contact-intro p{color:var(--muted);margin:0;max-width:720px}
+  .assessment-kicker{color:var(--lime);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+  .assessment-start{white-space:nowrap}
+  .assessment-stage{display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;align-items:start}
+  .assessment-progress{position:sticky;top:108px;border:1px solid var(--line);border-radius:18px;padding:22px;background:rgba(0,27,33,.52)}
+  .progress-label{font-size:12px;color:var(--muted);margin-bottom:12px}
+  .progress-track{height:5px;border-radius:999px;background:rgba(234,243,239,.1);overflow:hidden}
+  .progress-track span{display:block;height:100%;width:0;background:var(--lime);border-radius:inherit;transition:width .3s ease}
+  .assessment-progress ol{list-style:none;padding:0;margin:22px 0 0;display:grid;gap:13px}
+  .assessment-progress li{display:flex;gap:9px;align-items:center;color:var(--mist);font-size:12px}
+  .assessment-progress li span{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:1px solid var(--line);border-radius:50%;font-size:9px;flex:none}
+  .assessment-progress li.current{color:var(--mint)}
+  .assessment-progress li.current span,.assessment-progress li.complete span{border-color:var(--line-strong);color:var(--lime);background:rgba(191,239,75,.05)}
+  .assessment-panel{border:1px solid var(--line);border-radius:26px;padding:38px;background:rgba(255,255,255,.018)}
+  .assessment-section-heading{padding-bottom:30px;border-bottom:1px solid var(--line)}
+  .assessment-section-heading h2:focus,.results-heading h2:focus{outline:none}
+  .assessment-question{border:0;padding:30px 0;margin:0;border-bottom:1px solid var(--line)}
+  .assessment-question.invalid{margin:20px -16px 0;padding:20px 16px;border:1px solid rgba(255,145,126,.6);border-radius:14px}
+  .assessment-question legend{font-family:"Manrope","Inter",sans-serif;font-size:19px;line-height:1.3;font-weight:600;padding:0;margin-bottom:17px;color:var(--mint)}
+  .optional-label{display:inline-block;margin-left:8px;font-family:"Inter",sans-serif;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--mist);vertical-align:middle}
+  .answer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .answer-option,.review-checkbox{position:relative;display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.015);color:var(--muted);font-size:14px;line-height:1.4;cursor:pointer;transition:border-color .18s ease,background .18s ease,color .18s ease}
+  .answer-option:hover{border-color:rgba(191,239,75,.34);color:var(--mint)}
+  .answer-option:has(input:checked),.review-checkbox:has(input:checked){border-color:var(--lime);background:rgba(191,239,75,.07);color:var(--mint)}
+  .answer-option input,.review-checkbox input{position:absolute;opacity:0;width:1px;height:1px}
+  .answer-control{width:17px;height:17px;border:1px solid var(--mist);border-radius:50%;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center}
+  input[type="checkbox"]+.answer-control{border-radius:5px}
+  .answer-option input:checked+.answer-control,.review-checkbox input:checked+.answer-control{border-color:var(--lime);background:var(--lime);box-shadow:inset 0 0 0 4px var(--bg-deep)}
+  .answer-option input:focus-visible+.answer-control,.review-checkbox input:focus-visible+.answer-control{outline:3px solid rgba(191,239,75,.35);outline-offset:3px}
+  .assessment-error{min-height:24px;padding-top:16px;color:#FFB8A9;font-size:13px}
+  .assessment-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:20px}
+  .assessment-controls button:disabled{opacity:.35;cursor:not-allowed}
+  .assessment-results{display:grid;gap:50px}
+  .results-heading{max-width:800px}
+  .dimension-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .dimension-card{padding:20px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}
+  .dimension-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .dimension-heading h3{font-size:15px;line-height:1.35;margin:0;font-weight:600}
+  .dimension-heading strong{font-family:"Manrope",sans-serif;color:var(--lime);font-size:24px;line-height:1}
+  .score-track{height:4px;background:rgba(234,243,239,.1);border-radius:999px;overflow:hidden;margin:25px 0 11px}
+  .score-track span{display:block;height:100%;background:var(--lime);border-radius:inherit}
+  .dimension-band{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+  .dimension-card.not-applicable .dimension-heading strong,.dimension-card.not-applicable .dimension-band{color:var(--mist)}
+  .interpretation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .interpretation-grid section{border:1px solid var(--line);border-radius:20px;padding:26px;background:rgba(255,255,255,.015)}
+  .interpretation-grid ul{padding:0;margin:20px 0 0;list-style:none;display:grid;gap:14px}
+  .interpretation-grid li{position:relative;padding-left:20px;color:var(--muted);font-size:14px}
+  .interpretation-grid li:before{content:"";position:absolute;left:0;top:.62em;width:7px;height:7px;border-radius:50%;background:var(--lime)}
+  .recommendations{padding-top:8px}
+  .recommendations>h2{max-width:720px}
+  .recommendation-list{display:grid;gap:10px;margin-top:28px}
+  .recommendation-card{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:22px;border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.018)}
+  .recommendation-card>span{color:var(--lime);font-size:11px;letter-spacing:.1em;padding-top:4px}
+  .recommendation-card h3{font-size:18px;margin:0 0 5px}
+  .recommendation-card p{color:var(--muted);font-size:14px;margin:0}
+  .contact-capture{border:1px solid var(--line-strong);border-radius:26px;padding:38px;background:linear-gradient(135deg,rgba(191,239,75,.05),rgba(0,27,33,.55))}
+  .contact-intro{max-width:720px;margin-bottom:30px}
+  .contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .contact-fields label:not(.review-checkbox){display:grid;gap:7px;color:var(--mint);font-size:12px;font-weight:600}
+  .contact-fields label small{color:var(--mist);font-weight:400;margin-left:5px}
+  .contact-fields input:not([type="checkbox"]),.contact-fields textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(0,27,33,.7);color:var(--mint);font:inherit;padding:13px 14px;resize:vertical}
+  .contact-fields input:focus,.contact-fields textarea:focus{outline:2px solid rgba(191,239,75,.35);border-color:var(--lime)}
+  .contact-fields .full-width{grid-column:1/-1}
+  .review-checkbox{align-items:center;background:transparent}
+  .privacy-note,.submission-status{font-size:12px;color:var(--muted);margin:18px 0 14px}
+  .submission-status{min-height:18px;margin-bottom:0}
+  .submission-status.error{color:#FFB8A9}.submission-status.success{color:var(--lime)}
+  .results-actions{display:flex;justify-content:space-between;align-items:center;gap:18px}
+  .text-button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+  .text-button:hover{color:var(--mint)}
+  [hidden]{display:none!important}
+
+  @media(max-width:900px){
+    .assessment-stage{grid-template-columns:1fr}
+    .assessment-progress{position:static}
+    .assessment-progress ol{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+    .assessment-progress li{font-size:10px}
+    .dimension-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media(max-width:700px){
+    .assessment-experience{padding:62px 0 86px}
+    .assessment-intro-copy h1{font-size:clamp(42px,12vw,56px)}
+    .assessment-trust{grid-template-columns:1fr}
+    .assessment-welcome{grid-template-columns:1fr;padding:28px;gap:28px}
+    .assessment-start{width:100%;white-space:normal}
+    .assessment-progress{padding:16px}
+    .assessment-progress ol{display:none}
+    .assessment-panel{padding:24px 18px}
+    .answer-grid,.dimension-grid,.interpretation-grid,.contact-fields{grid-template-columns:1fr}
+    .assessment-controls{align-items:stretch}
+    .assessment-controls .button{padding-inline:14px}
+    .contact-capture{padding:27px 20px}
+    .results-actions{align-items:flex-start;flex-direction:column}
+  }
+</style>

@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { services } from '../../data/services';
+
+export function getStaticPaths() {
+  return services.map((service) => ({
+    params: { slug: service.slug },
+    props: { service }
+  }));
+}
+
+const { service } = Astro.props;
+---
+<BaseLayout title={`${service.title} — Fiero Consulting`} description={service.short}>
+  <section class="page-hero">
+    <div class="wrap" data-reveal>
+      <div class="eyebrow">{service.index}</div>
+      <h1>{service.title}</h1>
+      <p>{service.intro}</p>
+    </div>
+  </section>
+  <section class="section">
+    <div class="wrap content-grid">
+      <aside><div class="sidebar-label">What this work covers</div><div class="chips" style="margin-top:18px">{service.capabilities.map((capability) => <span class="chip">{capability}</span>)}</div></aside>
+      <div class="prose" data-reveal>
+        <h2>Architecture and implementation focused on clear operational outcomes.</h2>
+        <p>{service.short}</p>
+        <h3>Typical outcomes</h3>
+        <div class="outcomes">{service.outcomes.map((outcome) => <div class="outcome">{outcome}</div>)}</div>
+        <h3>How Fiero approaches the work</h3>
+        <p>Start with the current environment, ownership model and operational constraints. Define the control points that matter, simplify where possible, automate what should be repeatable, and leave behind architecture and documentation that an internal team can operate.</p>
+      </div>
+    </div>
+  </section>
+  <section class="final-cta"><div class="wrap"><div class="final-panel"><h2>Make the architecture concrete.</h2><p>Discuss the environment, constraints and outcome you are trying to reach.</p><a class="button primary" href="/assessment">Assess Your Identity Environment ↗</a></div></div></section>
+</BaseLayout>

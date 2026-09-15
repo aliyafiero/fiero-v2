@@ -1,0 +1,224 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ControlPlane from '../components/ControlPlane.astro';
+import AgentControlModel from '../components/AgentControlModel.astro';
+import DelegatedIdentityFlow from '../components/DelegatedIdentityFlow.astro';
+---
+<BaseLayout
+  title="Fiero: Identity, Automation & Agentic Systems"
+  description="Move AI agents from experimentation to governed enterprise infrastructure with Fiero: agent discovery, accountable ownership, authorization and enterprise automation."
+>
+  <section class="hero home-hero">
+    <div class="wrap">
+      <div class="hero-copy" data-reveal>
+        <div class="eyebrow">Identity + automation for the agentic enterprise</div>
+        <h1>Move AI agents from experimentation to <span class="lime">governed enterprise infrastructure.</span></h1>
+        <p class="lead">Discover the agents already operating across your environment. Establish identity and accountable ownership. Authorize access at runtime. Connect agents safely to the systems where work happens.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="/assessment">Assess Your Environment <span>↗</span></a>
+          <a class="button ghost" href="/agentic-enterprise">Explore the Agentic Architecture <span aria-hidden="true">↗</span></a>
+        </div>
+        <ul class="hero-proof" aria-label="Fiero priorities" role="list">
+          <li>Discover agents</li>
+          <li>Establish accountability</li>
+          <li>Authorize every connection</li>
+          <li>Automate real work</li>
+        </ul>
+      </div>
+      <div class="ecosystem-inner" data-reveal>
+        <span class="ecosystem-label">Enterprise foundation</span>
+        <span class="tech">Okta</span><span class="tech">Microsoft Entra</span><span class="tech">Active Directory</span><span class="tech">Workday</span><span class="tech">ServiceNow</span><span class="tech">SCIM</span><span class="tech">APIs</span><span class="tech">MCP</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap problem-overview">
+      <div class="problem-copy" data-reveal>
+        <div class="eyebrow">The new identity boundary</div>
+        <h2>Your AI workforce is already arriving.</h2>
+        <p>AI agents are moving from assistants to actors. They are accessing enterprise data, calling APIs, initiating workflows and making decisions across systems.</p>
+        <p>Knowing an agent exists is only the start. You also need to know who is accountable, what it can access and how that access is controlled.</p>
+        <p>Fiero helps turn that visibility into an identity, authorization and governance architecture grounded in your enterprise IAM foundation.</p>
+      </div>
+      <ControlPlane />
+    </div>
+  </section>
+
+  <section class="section" id="architecture">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <div class="eyebrow">The control layer</div>
+        <h2>From fragmented access to governed action.</h2>
+        <p>Fiero creates the control layer between intent and action, establishing who or what is acting, what it is allowed to do, which approvals apply, how the action should execute and how the result is recorded.</p>
+        <p class="operating-principle">AI reasons. Policy decides. Governed automation executes.</p>
+      </div>
+      <div class="control-layer" data-reveal>
+        <article class="control-stage">
+          <span class="stage-label">Today</span>
+          <div class="control-items">
+            <span>Humans</span><span>Service accounts</span><span>AI tools</span><span>SaaS applications</span><span>APIs</span><span>Enterprise data</span><span>Manual approvals</span><span>Disconnected automation</span>
+          </div>
+        </article>
+        <div class="control-arrow" aria-hidden="true">→</div>
+        <article class="control-stage featured">
+          <span class="stage-label">Fiero control layer</span>
+          <div class="control-items">
+            <span>Identity</span><span>Authorization</span><span>Policy</span><span>Governance</span><span>Orchestration</span><span>Audit</span>
+          </div>
+        </article>
+        <div class="control-arrow" aria-hidden="true">→</div>
+        <article class="control-stage outcome-stage">
+          <span class="stage-label">Agentic enterprise</span>
+          <p>People and agents can act across enterprise systems within defined, observable and enforceable boundaries.</p>
+        </article>
+      </div>
+      <AgentControlModel />
+    </div>
+  </section>
+
+  <section class="section light-surface" id="capabilities">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <div class="eyebrow">What Fiero does</div>
+        <h2>Advisory. Architecture. Automation. Agentic systems.</h2>
+      </div>
+      <div class="capability-grid">
+        <article class="capability-card" data-reveal>
+          <span class="card-index">01 / DESIGN</span>
+          <h3>Advisory &amp; Architecture</h3>
+          <strong>Design the operating model before adding complexity.</strong>
+          <p>Agentic enterprise strategy, identity architecture, governance models, integration patterns, security controls and modernization roadmaps.</p>
+        </article>
+        <article class="capability-card" data-reveal>
+          <span class="card-index">02 / BUILD</span>
+          <h3>Engineering &amp; Automation</h3>
+          <strong>Turn architecture into working systems.</strong>
+          <p>Identity platforms, lifecycle automation, access governance, APIs, enterprise integrations, identity-as-code and governed workflow orchestration.</p>
+        </article>
+        <article class="capability-card" data-reveal>
+          <span class="card-index">03 / PROVE</span>
+          <h3>Solutions</h3>
+          <strong>See the architecture working.</strong>
+          <p>Fiero-built implementations that demonstrate how identity, automation and agents solve real enterprise operating problems.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="featured-solution">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <div class="eyebrow">Fiero solution · Working demonstration</div>
+        <h2>Delegated Identity Operations</h2>
+        <p>Let business users request access naturally, without giving them administrative access. Identity, policy and approvals govern what happens next.</p>
+      </div>
+
+      <DelegatedIdentityFlow />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="proof-panel" data-reveal>
+        <div><div class="proof-kicker">Identity engineering foundation</div></div>
+        <div class="proof-copy">
+          <h2>Proven in enterprise identity. Built for what comes next.</h2>
+          <p>Agentic systems introduce new interfaces, but many of the hardest problems are not new: identity, delegated authority, least privilege, lifecycle, integration, approvals and auditability.</p>
+          <p>Fiero brings more than a decade of enterprise identity and automation experience to those problems, from complex workforce IAM and external-user ecosystems to access governance and API-driven lifecycle automation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section light-surface" id="framework">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <div class="eyebrow">How Fiero works</div>
+        <h2>From the problem in front of you to the system behind it.</h2>
+        <p>Understand what is happening, design how it should work, build the operating system underneath it, and improve it as the business evolves.</p>
+      </div>
+      <div class="work-stages" data-reveal>
+        <article class="work-stage"><div class="work-stage-label">01 / Understand</div><h3>See what is actually happening.</h3><p>Map identities, systems, workflows, access paths, agents and operational friction.</p></article>
+        <article class="work-stage"><div class="work-stage-label">02 / Design</div><h3>Define how it should work.</h3><p>Establish ownership, identity boundaries, authorization, governance and integration patterns.</p></article>
+        <article class="work-stage"><div class="work-stage-label">03 / Build</div><h3>Make the architecture operational.</h3><p>Connect systems, automate lifecycle and access processes, and implement governed workflows.</p></article>
+        <article class="work-stage"><div class="work-stage-label">04 / Evolve</div><h3>Improve what is running.</h3><p>Measure outcomes, reduce friction and extend the architecture as the business changes.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="assessment">
+    <div class="wrap">
+      <div class="assessment-callout" data-reveal>
+        <div>
+          <div class="eyebrow">Identity environment assessment</div>
+          <h2>How ready is your identity layer?</h2>
+          <p>Assess the systems, lifecycle processes, access controls, automation and governance underpinning your workforce, including your emerging AI workforce.</p>
+          <small>See your results before sharing contact information. No credentials, exports or production access required.</small>
+        </div>
+        <a class="button primary" href="/assessment">Take the Identity &amp; Automation Assessment <span>↗</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="insights">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <div class="eyebrow">Insights</div>
+        <h2>Architecture for the next identity boundary.</h2>
+        <p>Planned technical notes on the identity, authorization and integration patterns behind governed agentic systems.</p>
+      </div>
+      <div class="insight-grid topic-grid">
+        <article class="insight" data-reveal><small>Planned topic · Agent identity</small><h3>Agent identities vs. service accounts</h3></article>
+        <article class="insight" data-reveal><small>Planned topic · Authorization</small><h3>Designing delegated authorization for AI agents</h3></article>
+        <article class="insight" data-reveal><small>Planned topic · Provisioning</small><h3>SCIM vs. event-driven identity provisioning</h3></article>
+        <article class="insight" data-reveal><small>Planned topic · MCP security</small><h3>Securing MCP and enterprise tool access</h3></article>
+        <article class="insight" data-reveal><small>Planned topic · Governance</small><h3>Human-in-the-loop approval patterns</h3></article>
+        <article class="insight" data-reveal><small>Planned topic · Identity-as-code</small><h3>Identity-as-code with Okta and Terraform</h3></article>
+        <article class="insight" data-reveal><small>Planned topic · Auditability</small><h3>Human → agent → agent attribution and auditability</h3></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta">
+    <div class="wrap">
+      <div class="final-panel" data-reveal>
+        <div class="eyebrow">Design the control layer</div>
+        <h2>Build what’s next on foundations you can trust.</h2>
+        <p>Whether you’re modernizing workforce identity, automating access operations or introducing agents into enterprise workflows, Fiero can help design and build the control layer underneath it.</p>
+        <div class="final-actions">
+          <a class="button primary" href="/contact">Start a Conversation <span>↗</span></a>
+          <a class="button ghost" href="#featured-solution">Explore Solutions <span>↑</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .home-hero h1 {
+      font-size: clamp(38px, 5.7vw, 76px);
+      line-height: 1.08;
+      letter-spacing: -.02em;
+      text-wrap: balance;
+      overflow-wrap: break-word;
+    }
+    .home-hero .eyebrow { max-width: 100%; }
+    .home-hero .eyebrow::before { flex-shrink: 0; }
+    .hero-proof { list-style: none; padding-left: 0; margin: 0; }
+    .hero-proof li { display: flex; align-items: baseline; gap: 9px; color: var(--mint); }
+    .hero-proof li::before { content: ''; width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: var(--lime); }
+    .section-head .operating-principle {
+      margin-top: 28px;
+      color: var(--mint);
+      font-family: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+      font-size: clamp(20px, 2.2vw, 26px);
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .hero-actions a:focus-visible { outline: 2px solid var(--mint); outline-offset: 5px; }
+    @media (max-width: 700px) {
+      .hero-proof { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      .hero-actions a { max-width: 100%; text-align: center; }
+    }
+  </style>
+</BaseLayout>
